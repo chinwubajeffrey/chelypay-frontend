@@ -1,4 +1,5 @@
 import { getToken } from "@/lib/session";
+import { connection } from "next/server";
 
 // Server-only: the Express API address. No NEXT_PUBLIC_ prefix on purpose.
 const API_URL = process.env.API_URL ?? "http://localhost:3000";
@@ -28,9 +29,12 @@ interface Options extends Omit<RequestInit, "headers"> {
 
 export async function backend<T = unknown>(
   path: string,
-  { auth = true, ...init }: Options = {}
+  { auth = true, ...init }: Options = {},
 ): Promise<T> {
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  await connection();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
   if (auth) {
     const token = await getToken();
     if (!token) throw new ApiError("You are not signed in.", 401);
@@ -39,11 +43,15 @@ export async function backend<T = unknown>(
 
   let res: Response;
   try {
-    res = await fetch(`${API_URL}${path}`, { ...init, headers, cache: "no-store" });
+    res = await fetch(`${API_URL}${path}`, {
+      ...init,
+      headers,
+      cache: "no-store",
+    });
   } catch {
     throw new ApiError(
       "Can't reach the ChelyPay server. Check that the backend is running.",
-      503
+      503,
     );
   }
 
@@ -56,7 +64,10 @@ export async function backend<T = unknown>(
   }
 
   if (!res.ok) {
-    throw new ApiError(messageFrom(data) ?? `Request failed (${res.status})`, res.status);
+    throw new ApiError(
+      messageFrom(data) ?? `Request failed (${res.status})`,
+      res.status,
+    );
   }
   return data as T;
 }

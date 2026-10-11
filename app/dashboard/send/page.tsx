@@ -1,28 +1,40 @@
 import type { Metadata } from "next";
-import { EmptyState, LinkButton, PageHeader } from "@/components/ui";
+import { Suspense } from "react";
 import { SendForm } from "@/components/send-form";
+import { ListSkeleton } from "@/components/skeleton";
+import { EmptyState, LinkButton, PageHeader } from "@/components/ui";
 import { getAccounts } from "@/lib/data";
 import { sumMoney } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Send money" };
 
-export default async function SendPage() {
+async function SendContent() {
   const accounts = await getAccounts();
-  const total = sumMoney(accounts.map((a) => a.balance));
+  if (accounts.length === 0) {
+    return (
+      <EmptyState
+        title="You need an account first"
+        body="Open an account before you send money."
+        action={
+          <LinkButton href="/dashboard/accounts">Create an account</LinkButton>
+        }
+      />
+    );
+  }
+  return <SendForm totalBalance={sumMoney(accounts.map((a) => a.balance))} />;
+}
 
+export default function SendPage() {
   return (
     <>
-      <PageHeader title="Send money" description="Transfer to any ChelyPay account number." />
+      <PageHeader
+        title="Send money"
+        description="Transfer to any ChelyPay account number."
+      />
       <div className="max-w-xl">
-        {accounts.length === 0 ? (
-          <EmptyState
-            title="You need an account first"
-            body="Open an account before you send money."
-            action={<LinkButton href="/dashboard/accounts">Create an account</LinkButton>}
-          />
-        ) : (
-          <SendForm totalBalance={total} />
-        )}
+        <Suspense fallback={<ListSkeleton rows={2} />}>
+          <SendContent />
+        </Suspense>
       </div>
     </>
   );

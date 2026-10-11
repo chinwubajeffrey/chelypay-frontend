@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Suspense } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Icon, type IconName } from "@/components/icons";
 
@@ -15,8 +16,21 @@ const items: { href: string; label: string; icon: IconName }[] = [
 const isActive = (pathname: string, href: string) =>
   href === "/dashboard" ? pathname === href : pathname.startsWith(href);
 
+// usePathname() is runtime data, so each nav reads it inside <Suspense>.
+// The fallback is the same nav with no active item, so nothing jumps around.
 export function SideNav() {
-  const pathname = usePathname();
+  return (
+    <Suspense fallback={<SideNavView pathname="" />}>
+      <SideNavLive />
+    </Suspense>
+  );
+}
+
+function SideNavLive() {
+  return <SideNavView pathname={usePathname()} />;
+}
+
+function SideNavView({ pathname }: { pathname: string }) {
   return (
     <nav aria-label="Main" className="mt-10 space-y-1">
       {items.map((item) => {
@@ -27,7 +41,9 @@ export function SideNav() {
             href={item.href}
             aria-current={active ? "page" : undefined}
             className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors ${
-              active ? "bg-pine text-white" : "text-muted hover:bg-paper hover:text-ink"
+              active
+                ? "bg-pine text-white"
+                : "text-muted hover:bg-paper hover:text-ink"
             }`}
           >
             <Icon name={item.icon} />
@@ -40,7 +56,18 @@ export function SideNav() {
 }
 
 export function BottomNav() {
-  const pathname = usePathname();
+  return (
+    <Suspense fallback={<BottomNavView pathname="" />}>
+      <BottomNavLive />
+    </Suspense>
+  );
+}
+
+function BottomNavLive() {
+  return <BottomNavView pathname={usePathname()} />;
+}
+
+function BottomNavView({ pathname }: { pathname: string }) {
   return (
     <nav
       aria-label="Main"
@@ -57,7 +84,9 @@ export function BottomNav() {
               active ? "text-ink" : "text-muted"
             }`}
           >
-            <span className={`rounded-full px-4 py-1 ${active ? "bg-marigold text-[#14201c]" : ""}`}>
+            <span
+              className={`rounded-full px-4 py-1 ${active ? "bg-marigold text-[#14201c]" : ""}`}
+            >
               <Icon name={item.icon} className="size-5" />
             </span>
             {item.label}
