@@ -5,11 +5,13 @@ import { CreateAccountForm } from "@/components/account-forms";
 import { ListSkeleton } from "@/components/skeleton";
 import { EmptyState, PageHeader } from "@/components/ui";
 import { getAccounts } from "@/lib/data";
+import { log } from "node:console";
 
 export const metadata: Metadata = { title: "Accounts" };
 
 async function AccountList() {
   const accounts = await getAccounts();
+  console.log(accounts);
   if (accounts.length === 0) {
     return (
       <EmptyState

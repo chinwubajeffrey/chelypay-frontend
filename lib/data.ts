@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { backend, ApiError } from "@/lib/backend";
 import { pickList, pickOne, toAccount, toTransaction } from "@/lib/mappers";
 import type { Account, Transaction } from "@/types";
+import { log } from "node:console";
 
 // Runs a backend call. Expired/invalid token -> back to login.
 // A 404 on a list endpoint is treated as "empty" (backend may say "none found").
@@ -19,15 +20,19 @@ async function guard<T>(fn: () => Promise<T>, onNotFound?: T): Promise<T> {
 
 export async function getAccounts(): Promise<Account[]> {
   const raw = await guard<unknown>(() => backend("/chelypay/account/get"), []);
+
   return pickList(raw, ["accounts"]).map(toAccount);
 }
 
 export async function getAccount(id: string): Promise<Account> {
   let raw: unknown;
   try {
-    raw = await guard(() => backend(`/chelypay/account/get/${encodeURIComponent(id)}`));
+    raw = await guard(() =>
+      backend(`/chelypay/account/get/${encodeURIComponent(id)}`),
+    );
   } catch (e) {
-    if (e instanceof ApiError && (e.status === 404 || e.status === 400)) notFound();
+    if (e instanceof ApiError && (e.status === 404 || e.status === 400))
+      notFound();
     throw e;
   }
   const r = pickOne(raw, ["account"]);
@@ -39,7 +44,7 @@ export async function getAccount(id: string): Promise<Account> {
 export async function getTransactions(): Promise<Transaction[]> {
   const raw = await guard<unknown>(
     () => backend("/chelypay/transaction/view-transactions"),
-    []
+    [],
   );
   return pickList(raw, ["transactions"])
     .map(toTransaction)
@@ -49,9 +54,12 @@ export async function getTransactions(): Promise<Transaction[]> {
 export async function getTransaction(id: string): Promise<Transaction> {
   let raw: unknown;
   try {
-    raw = await guard(() => backend(`/chelypay/transaction/transaction/${encodeURIComponent(id)}`));
+    raw = await guard(() =>
+      backend(`/chelypay/transaction/transaction/${encodeURIComponent(id)}`),
+    );
   } catch (e) {
-    if (e instanceof ApiError && (e.status === 404 || e.status === 400)) notFound();
+    if (e instanceof ApiError && (e.status === 404 || e.status === 400))
+      notFound();
     throw e;
   }
   const r = pickOne(raw, ["transaction"]);
