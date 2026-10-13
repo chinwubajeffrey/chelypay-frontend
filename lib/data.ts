@@ -20,8 +20,8 @@ async function guard<T>(fn: () => Promise<T>, onNotFound?: T): Promise<T> {
 
 export async function getAccounts(): Promise<Account[]> {
   const raw = await guard<unknown>(() => backend("/chelypay/account/get"), []);
-
-  return pickList(raw, ["accounts"]).map(toAccount);
+  console.log(pickList(raw, ["account"]).map(toAccount));
+  return pickList(raw, ["account"]).map(toAccount);
 }
 
 export async function getAccount(id: string): Promise<Account> {
@@ -35,7 +35,8 @@ export async function getAccount(id: string): Promise<Account> {
       notFound();
     throw e;
   }
-  const r = pickOne(raw, ["account"]);
+  // The backend may send { account: {...} } or { account: [{...}] }
+  const r = pickList(raw, ["account"])[0] ?? pickOne(raw, ["account"]);
   const account = r ? toAccount(r) : null;
   if (!account || !account.id) notFound();
   return account;
@@ -62,7 +63,8 @@ export async function getTransaction(id: string): Promise<Transaction> {
       notFound();
     throw e;
   }
-  const r = pickOne(raw, ["transaction"]);
+  const r =
+    pickList(raw, ["transactions"])[0] ?? pickOne(raw, ["transactions"]);
   const tx = r ? toTransaction(r) : null;
   if (!tx || !tx.id) notFound();
   return tx;
